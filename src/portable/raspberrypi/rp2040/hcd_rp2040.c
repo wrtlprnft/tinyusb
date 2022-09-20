@@ -303,7 +303,7 @@ void __tusb_irq_path_func(hcd_int_handler)(uint8_t rhport)
 static struct hw_endpoint *_next_free_interrupt_ep(void)
 {
     struct hw_endpoint *ep = NULL;
-    for (uint i = 1; i < TU_ARRAY_SIZE(ep_pool); i++)
+    for (uint i = 0; i < TU_ARRAY_SIZE(ep_pool); i++)
     {
         ep = &ep_pool[i];
         if (!ep->configured)
@@ -441,7 +441,7 @@ bool hcd_init(uint8_t rhport)
 
   irq_add_shared_handler(USBCTRL_IRQ, hcd_rp2040_irq, PICO_SHARED_IRQ_HANDLER_HIGHEST_ORDER_PRIORITY);
 
-  // clear epx and interrupt eps
+  // clear interrupt eps
   memset(&ep_pool, 0, sizeof(ep_pool));
 
   // Enable in host mode with SOF / Keep alive on
@@ -504,7 +504,7 @@ void hcd_device_close(uint8_t rhport, uint8_t dev_addr)
 
   if (dev_addr == 0) return;
 
-  for (size_t i = 1; i < TU_ARRAY_SIZE(ep_pool); i++)
+  for (size_t i = 0; i < TU_ARRAY_SIZE(ep_pool); i++)
   {
     hw_endpoint_t* ep = &ep_pool[i];
 
@@ -522,7 +522,7 @@ void hcd_device_close(uint8_t rhport, uint8_t dev_addr)
     }
   }
 
-  for (size_t i = 1; i < TU_ARRAY_SIZE(sw_ep_pool); i++) {
+  for (size_t i = 0; i < TU_ARRAY_SIZE(sw_ep_pool); i++) {
     if (sw_ep_pool[i].dev_addr == dev_addr) {
       sw_ep_pool[i].configured = false;
     }
@@ -586,6 +586,7 @@ bool hcd_edpt_open(uint8_t rhport, uint8_t dev_addr, tusb_desc_endpoint_t const 
         ep->wMaxPacketSize = tu_edpt_packet_size(ep_desc);
         ep->transfer_type  = transfer_type;
         ep->bmInterval     = ep_desc->bInterval;
+        ep->next_pid       = 0;
     } else {
         /* control endpoint is implicitly open (sw_ep_ctrl) */
     }
